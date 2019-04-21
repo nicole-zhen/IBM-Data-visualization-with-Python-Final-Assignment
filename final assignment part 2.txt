@@ -1,0 +1,51 @@
+import numpy as np  # useful for many scientific computing in Python
+import pandas as pd # primary data structure library
+
+#import folium
+!conda install -c conda-forge folium=0.5.0 --yes
+import folium
+
+print('Folium installed and imported!')
+
+#download file
+df_crime = pd.read_csv('https://cocl.us/sanfran_crime_dataset')
+
+print('Dataset downloaded and read into a pandas dataframe!')
+
+df_crime.head()
+
+#calculate the number of crimes in each district
+df_sf=df_crime.loc[:,('PdDistrict','IncidntNum')]
+
+df_sf.rename(columns={'PdDistrict':'Neighborhood','IncidntNum':'Count'},inplace=True)
+
+df_sf1=df_sf.groupby(['Neighborhood']).size().to_frame('count')
+
+df_sf1.sort_values(['count'], ascending=False, axis=0, inplace=True)
+
+df_sf1 = df_sf1.reset_index()
+
+df_sf1
+
+#download json file
+!wget --quiet https://cocl.us/sanfran_geojson -O sanfran.json
+
+sanfran_geo = r'sanfran.json'
+
+sf_map = folium.Map(location=[37.773972, -122.431297], zoom_start=12)
+sf_map
+
+# generate choropleth map using the total immigration of each country to Canada from 1980 to 2013
+sf_map.choropleth(
+    geo_data=sanfran_geo,
+    data=df_sf1,
+    columns=['Neighborhood', 'count'],
+    key_on='feature.properties.DISTRICT',
+    fill_color='YlOrRd', 
+    fill_opacity=0.7, 
+    line_opacity=0.2,
+    legend_name='Crime Rate in San Francisco'
+)
+
+# display map
+sf_map
